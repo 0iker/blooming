@@ -242,6 +242,7 @@ o (a tu elección) cualquier versión posterior.
 Para consultas sobre el proyecto:
 
 - **📧 Email de soporte:** blooming.abp@gmail.com
+- **📧 Email de contacto:** iker.r.s.2002@gmail.com
 - **🎓 Institución:** Universidad de Alicante
 - **📅 Curso académico:** 2023/2024
 - **🏷️ Programa:** Aprendizaje Basado en Proyectos (ABP)
