@@ -134,106 +134,104 @@ const getAlumnos = async (req, res) => {
 }
 
 
-    function obtenerApellidos(apellidos) {
-        const partes = apellidos.split(' ');
+function obtenerApellidos(apellidos) {
+    const partes = apellidos.split(' ');
 
-        const apellido1 = partes[0] || '';
-        const apellido2 = partes.length > 1 ? partes[1] : '';
+    const apellido1 = partes[0] || '';
+    const apellido2 = partes.length > 1 ? partes[1] : '';
 
-        return { apellido1, apellido2 };
-    }
+    return { apellido1, apellido2 };
+}
 
-    function generarUsuario(nombre, apellidos, id) {
-        const { apellido1, apellido2 } = obtenerApellidos(apellidos);
+function generarUsuario(nombre, apellidos, id) {
+    const { apellido1, apellido2 } = obtenerApellidos(apellidos);
 
-        const nombres = nombre.split(' ');
-        const nombre1 = nombres.length > 0 ? nombres[0] : '';
+    const nombres = nombre.split(' ');
+    const nombre1 = nombres.length > 0 ? nombres[0] : '';
 
-        const inicialN2 = nombres.length > 1 ? nombres[1].charAt(0).toLowerCase() : '';
+    const inicialN2 = nombres.length > 1 ? nombres[1].charAt(0).toLowerCase() : '';
 
-        const inicialApellido1 = apellido1.charAt(0).toLowerCase();
-        const inicialApellido2 = apellido2.charAt(0).toLowerCase();
+    const inicialApellido1 = apellido1.charAt(0).toLowerCase();
+    const inicialApellido2 = apellido2.charAt(0).toLowerCase();
 
-        const username = `${nombre1.toLowerCase()}${inicialN2}${inicialApellido1}${inicialApellido2}${id}`;
+    const username = `${nombre1.toLowerCase()}${inicialN2}${inicialApellido1}${inicialApellido2}${id}`;
 
-        return username;
-    }
+    return username;
+}
 
 
-    const createAlumno = async (req, res) => {
-        try {
-            const usuario = "";
-    
-            const existAlumno = await Alumno.findOne({ where: { Usuario: usuario } });
-            if (existAlumno) {
-                return res.status(400).json({ ok: false, message: "El usuario del alumno ya existe" });
-            }
-        
-            const datos = req.body;
+const createAlumno = async (req, res) => {
+    try {
+        const usuario = "";
 
-            const hashedPassword = hashPassword(req.body.Contraseña);
-            const ambitos = {"Clase":50,"Amigos":50,"Familia":50,"Emociones":50,"Fuera de clase":50};
-            const frecuencia = {"Clase":0,"Amigos":0,"Familia":0,"Emociones":0,"Fuera de clase":0}
-            const estado = "Normal";
-            const points = 0;
-            const newAlumno = { ...req.body, Contraseña: hashedPassword, Usuario: usuario, Estado: estado, Ambitos: ambitos, AparicionAmbitos: frecuencia, Puntos: points};
-        
-            const createdAlumno = await Alumno.create(newAlumno);
-        
-            const idAlumno = createdAlumno.ID_Alumno;
-            const nomUsuario = generarUsuario(req.body.Nombre, req.body.Apellidos, idAlumno);
-
-            await sendMail(datos, nomUsuario);
-        
-            await Alumno.update({ Usuario: nomUsuario }, { where: { ID_Alumno: idAlumno } });
-        
-            return res.json({
-                ok: true,
-                msg: 'createAlumno'
-            });
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ ok: false, message: "Error al crear el alumno" });
+        const existAlumno = await Alumno.findOne({ where: { Usuario: usuario } });
+        if (existAlumno) {
+            return res.status(400).json({ ok: false, message: "El usuario del alumno ya existe" });
         }
+    
+        const datos = req.body;
+
+        const hashedPassword = hashPassword(req.body.Contraseña);
+        const ambitos = {"Clase":50,"Amigos":50,"Familia":50,"Emociones":50,"Fuera de clase":50};
+        const frecuencia = {"Clase":0,"Amigos":0,"Familia":0,"Emociones":0,"Fuera de clase":0}
+        const estado = "Normal";
+        const points = 0;
+        const newAlumno = { ...req.body, Contraseña: hashedPassword, Usuario: usuario, Estado: estado, Ambitos: ambitos, AparicionAmbitos: frecuencia, Puntos: points};
+    
+        const createdAlumno = await Alumno.create(newAlumno);
+    
+        const idAlumno = createdAlumno.ID_Alumno;
+        const nomUsuario = generarUsuario(req.body.Nombre, req.body.Apellidos, idAlumno);
+
+        await sendMail(datos, nomUsuario);
+    
+        await Alumno.update({ Usuario: nomUsuario }, { where: { ID_Alumno: idAlumno } });
+    
+        return res.json({
+            ok: true,
+            msg: 'createAlumno'
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ ok: false, message: "Error al crear el alumno" });
+    }
+};
+
+const sendMail = async (datos, usuario) => {
+    const centro = await Centro.findOne({ where: { ID_Centro: datos.ID_Centro } });
+    const clase = await Clase.findOne({ where: { ID_Clase: datos.ID_Clase } });
+
+    const transporter = nodemailer.createTransporter({
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: datos.EmailTutor,
+        subject: 'Bienvenido a Blooming',
+        text: 
+            `Buenas,
+            Desde el ${centro.Nombre} le damos la bienvenida a su hijo a la plataforma Blooming. Se le ha matriculado en la clase ${clase.Nombre}.
+            Los datos de acceso son:
+            Usuario: ${usuario}
+            Contraseña: ${datos.Contraseña}
+                        
+            Un saludo.
+            ${centro.Nombre}`
     };
 
-    const sendMail = async (datos, usuario) => {
-
-        const centro = await Centro.findOne({ where: { ID_Centro: datos.ID_Centro } });
-        const clase = await Clase.findOne({ where: { ID_Clase: datos.ID_Clase } });
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: 'blooming.abp@gmail.com',
-                pass: 'fkpn mfrg bcal qrpb'
-            }
-        });
-
-        const mailOptions = {
-            from: 'blooming.abp@gmail.com',
-            to: datos.EmailTutor,
-            subject: 'Bienvenido a Blooming',
-            text: 
-                `Buenas,
-                Desde el ${centro.Nombre} le damos la bienvenida a su hijo a la plataforma Blooming. Se le ha matriculado en la clase ${clase.Nombre}.
-                Los datos de acceso son:
-                Usuario: ${usuario}
-                Contraseña: ${datos.Contraseña}
-                            
-                Un saludo.
-                ${centro.Nombre}`
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Error al enviar el email:', error);
-            } else {
-                //console.log('Email enviado: ' + info.response);
-            }
-        });
-
-    }
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error al enviar el email:', error);
+        } else {
+            //console.log('Email enviado: ' + info.response);
+        }
+    });
+}
 
 
 const updateAlumno = async (req, res) => {

@@ -144,43 +144,41 @@ const createProfesor = async (req, res) => {
     }
 };
 
-    const sendMail = async (datos) => {
+const sendMail = async (datos) => {
+    const centro = await Centro.findOne({ where: { ID_Centro: datos.ID_Centro } });
+    const clase = await Clase.findOne({ where: { ID_Clase: datos.ID_Clase } });
 
-        const centro = await Centro.findOne({ where: { ID_Centro: datos.ID_Centro } });
-        const clase = await Clase.findOne({ where: { ID_Clase: datos.ID_Clase } });
+    const transporter = nodemailer.createTransporter({
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
 
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: 'blooming.abp@gmail.com',
-                pass: 'fkpn mfrg bcal qrpb'
-            }
-        });
-    
-        const mailOptions = {
-            from: 'blooming.abp@gmail.com',
-            to: datos.Email,
-            subject: 'Bienvenido a Blooming',
-            text: 
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: datos.Email,
+        subject: 'Bienvenido a Blooming',
+        text: 
 `Buenas ${datos.Nombre} ${datos.Apellidos},
 Desde el ${centro.Nombre} le damos la bienvenida a la plataforma Blooming. Le informamos además que se ha creado su cuenta en la misma y se le ha asignado como tutor de la clase ${clase.Nombre}.
 Sus datos de acceso son:
 Email: ${datos.Email}
 Contraseña: ${datos.Contraseña}
-            
+        
 Un saludo.
 ${centro.Nombre}`
-        };
-    
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Error al enviar el email:', error);
-            } else {
-                //console.log('Email enviado: ' + info.response);
-            }
-        });
-    
-    }
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error al enviar el email:', error);
+        } else {
+            //console.log('Email enviado: ' + info.response);
+        }
+    });
+}
 
 
 const updateProfesor = async (req, res) => {
@@ -211,14 +209,14 @@ const updateProfesor = async (req, res) => {
 };
 
 
-    function verify(token) {
-        try {
-            const decodedToken = jwt.verify(token, process.env.JWTSECRET);
-            return decodedToken;
-        } catch (error) {
-            return false;
-        }
+function verify(token) {
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWTSECRET);
+        return decodedToken;
+    } catch (error) {
+        return false;
     }
+}
 
 const updateProfesorPwd = async (req, res) => {
     try {
